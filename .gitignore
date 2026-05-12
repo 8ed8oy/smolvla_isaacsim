@@ -1,0 +1,57 @@
+# 1. Python 基础与虚拟环境
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# 2. 运行日志、测试与缓存
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+
+# 3. 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+*~
+*.swp
+
+# 4. Jupyter Notebook
+.ipynb_checkpoints/
+
+# 5. 模型权重与大数据集 (VLA相关)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.h5
+datasets/
+
+# 6. 项目输出与训练记录 (Isaac Sim & 实验日志)
+smolvla_isaac_embed/outputs/
+outputs/
+logs/
+metrics/
+videos/
+*.mp4
+artifacts/
+wandb/
+tensorboard/
+.cache/
+
+# 7. Local Environments
+.conda/
+.serena/
