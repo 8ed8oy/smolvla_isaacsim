@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 
-"""Run a minimal IsaacLab-Arena smoke test without depending on lerobot installation."""
+"""在不依赖 lerobot 安装的情况下运行一个最小的 IsaacLab-Arena 烟雾测试。
+
+目的：
+- 验证 Isaac App 和目标 Arena 环境是否能够创建。
+- 在接入策略推理之前，检查环境的 reset/step。
+
+用法：
+- 直接用一个 Arena 示例环境名运行这个脚本。
+- 典型示例：``python smolvla_isaac_embed/scripts/arena_smoke_check.py --headless --enable_cameras gr1_open_microwave``。
+"""
 
 from __future__ import annotations
 

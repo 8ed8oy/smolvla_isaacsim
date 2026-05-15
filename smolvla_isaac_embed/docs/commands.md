@@ -4,6 +4,8 @@
 
 不要把尚未验证的命令写成既成事实。
 
+环境背景、阻塞判断、终端差异分析等说明优先放在 `docs/environment.md`。
+
 ## 1. 环境检查
 
 ```bash
@@ -22,7 +24,9 @@ curl -I https://pypi.nvidia.com
 - 备注：`conda.anaconda.org` 与 `pypi.nvidia.com` 可访问
 - 备注：`nvidia-smi` 在 Codex 终端上下文中仍可能失败，但这与用户本机终端结果不一致，不能单凭这一条认定 GPU 驱动异常
 
-## 2. Isaac 环境创建
+## 2. Arena Python 与 Isaac 依赖
+
+### 2.1 Isaac 环境创建
 
 ```bash
 mkdir -p .cache .conda/pkgs
@@ -55,7 +59,7 @@ git clone --depth 1 --branch release/0.1.1 \
 - 备注：`Isaac Sim 5.1.0`、`IsaacLab v2.3.0`、`IsaacLab-Arena release/0.1.1` 已在当前环境可导入
 - 备注：ZJU 镜像源在 TLS 上不稳定，最终改用官方 `conda-forge`
 
-## 3. Isaac 导入核查
+### 2.2 Isaac 导入核查
 
 ```bash
 OMNI_KIT_ACCEPT_EULA=YES \
@@ -68,7 +72,9 @@ OMNI_KIT_ACCEPT_EULA=YES \
 - 是否成功：成功
 - 备注：已确认 `isaacsim`、`isaaclab`、`isaaclab_arena` 能导入，`torch` 为 `2.7.0+cu128`
 
-## 4. 当前 `lerobot` 兼容性核查
+## 3. LeRobot 兼容性与辅助环境
+
+### 3.1 当前 `lerobot` 兼容性核查
 
 ```bash
 OMNI_KIT_ACCEPT_EULA=YES \
@@ -82,18 +88,7 @@ OMNI_KIT_ACCEPT_EULA=YES \
 - 备注：失败点是 Python 3.12 专属语法 `type NameOrID = str | int`
 - 备注：说明当前工作区这份 `lerobot` 不适合直接安装到 `Python 3.11` 的 Arena 环境
 
-## 5. SmolVLA 加载
-
-```bash
-# 待填写
-```
-
-结果：
-
-- 是否成功：
-- 备注：
-
-## 5.1 LeRobot 辅助环境创建
+### 3.2 LeRobot 辅助环境创建
 
 ```bash
 ./.venv/bin/python -m venv .venv-lerobot
@@ -112,7 +107,40 @@ PIP_NO_BUILD_ISOLATION=1 ./.venv-lerobot/bin/pip install -e ./lerobot --no-deps 
 - 备注：已确认 `lerobot` 以 editable 方式挂载到该环境
 - 备注：当前只完成了源码挂载，不代表 `torch`、`transformers` 等运行依赖已经补齐
 
-## 6. 最小闭环运行
+## 4. Isaac / Arena 最小运行核查
+
+### 4.1 `setup_isaaclab_arena_env.sh`
+
+```bash
+./smolvla_isaac_embed/scripts/setup_isaaclab_arena_env.sh
+```
+
+结果：
+
+- 是否成功：成功
+- 备注：已确认 Arena 环境 Python 为 `3.11.15`
+- 备注：已确认 `isaacsim`、`isaaclab`、`isaaclab_arena` 在该环境中可导入
+- 备注：该脚本当前只做“环境核查 + 推荐下一条命令”，不会自动跑通 smoke test
+
+### 4.2 `isaac_app_probe.py`
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+XDG_CACHE_HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.cache \
+HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace \
+./.conda/lerobot-arena/bin/python \
+  smolvla_isaac_embed/scripts/isaac_app_probe.py \
+  --headless \
+  --enable_cameras
+```
+
+结果：
+
+- 是否成功：失败
+- 备注：当前 Codex 终端中失败于 Isaac Sim GPU 初始化
+- 备注：环境差异与原因判断见 `docs/environment.md`
+
+### 4.3 `arena_smoke_check.py` 历史最小闭环命令
 
 ```bash
 OMNI_KIT_ACCEPT_EULA=YES \
@@ -132,41 +160,54 @@ OMNI_KIT_ACCEPT_EULA=YES \
 - 输出位置：终端标准输出
 - 备注：该脚本不依赖安装 `lerobot`，用于优先确认 Arena 环境、观测键和动作维度
 - 备注：历史记录中，已有一次最小检查结果被整理进 `docs/interfaces.md`
-- 备注：`2026-05-13` 在 Codex 代理终端再次执行时，Isaac Sim 在 GPU / Vulkan 初始化阶段失败，未能在当前终端上下文中稳定复现 `reset_ok`
+- 备注：当前终端复核状态与环境解释见 `docs/environment.md`
 
-### 6.1 `setup_isaaclab_arena_env.sh`
-
-```bash
-./smolvla_isaac_embed/scripts/setup_isaaclab_arena_env.sh
-```
-
-结果：
-
-- 是否成功：成功
-- 备注：已确认 Arena 环境 Python 为 `3.11.15`
-- 备注：已确认 `isaacsim`、`isaaclab`、`isaaclab_arena` 在该环境中可导入
-- 备注：该脚本当前只做“环境核查 + 推荐下一条命令”，不会自动跑通 smoke test
-
-### 6.2 `isaac_app_probe.py`
+### 4.4 `arena_smoke_check.py` 在当前 Codex 终端的最新复核
 
 ```bash
 OMNI_KIT_ACCEPT_EULA=YES \
 XDG_CACHE_HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.cache \
 HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace \
-./.conda/lerobot-arena/bin/python \
-  smolvla_isaac_embed/scripts/isaac_app_probe.py \
+./.conda/lerobot-arena/bin/python smolvla_isaac_embed/scripts/arena_smoke_check.py \
   --headless \
-  --enable_cameras
+  --enable_cameras \
+  --num_steps 0 \
+  gr1_open_microwave \
+  --embodiment gr1_pink \
+  --object mustard_bottle
 ```
 
 结果：
 
 - 是否成功：失败
-- 备注：`2026-05-13` 在 Codex 代理终端中失败于 Isaac Sim GPU 初始化
-- 备注：关键报错包括 `NVML_ERROR_DRIVER_NOT_LOADED`、`No device could be created`、`Failed to create primary CUDA context`
-- 备注：该失败说明“当前代理终端上下文”还不能稳定启动 Isaac App，但不能单独用于否定用户本机终端中的 GPU 可用性
+- 备注：`2026-05-15` 在当前 Codex 终端中无法完成 Isaac Sim 启动
+- 备注：环境差异与 GPU 透传相关判断见 `docs/environment.md`
 
-## 7. 调试命令
+### 4.5 `arena_smoke_check.py` 在用户本机终端的成功复核
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+XDG_CACHE_HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.cache \
+HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace \
+./.conda/lerobot-arena/bin/python smolvla_isaac_embed/scripts/arena_smoke_check.py \
+  --headless \
+  --enable_cameras \
+  --num_steps 0 \
+  gr1_open_microwave \
+  --embodiment gr1_pink \
+  --object mustard_bottle
+```
+
+结果：
+
+- 是否成功：成功
+- 备注：用户本机终端已验证 `reset_ok`
+- 备注：运行时设备为 `cuda:0`
+- 备注：动作空间形状为 `(1, 36)`
+- 备注：观测顶层 keys 为 `['camera_obs', 'policy']`
+- 备注：最终输出 `smoke_test_ok`
+
+## 5. 调试命令
 
 用于排查 observation、动作维度、显存等。
 
@@ -177,9 +218,24 @@ find /tmp -maxdepth 2 -type d -name 'pip-*' | sed -n '1,20p'
 conda activate /media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.conda/lerobot-arena
 ```
 
-## 8. 当前推荐命令
+## 6. 当前推荐命令
 
-这一节只保留“当前最推荐使用的那几条命令”。
+这一节只保留“当前最推荐使用且已验证过的那几条命令”。
+
+当前基线配置文件：
+
+```text
+smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml
+```
+
+其中已固化：
+
+- Arena 环境名 `gr1_open_microwave`
+- LeRobot 参考环境名 `gr1_microwave`
+- checkpoint `nvidia/smolvla-arena-gr1-microwave`
+- `state_keys`
+- `camera_keys`
+- `rename_map`
 
 ### 6.1 推荐的环境检查命令
 

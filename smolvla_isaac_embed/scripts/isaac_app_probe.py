@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
-"""Minimal Isaac Sim launch probe for IsaacLab environments.
+"""用于 IsaacLab 环境的最小 Isaac Sim 启动探针。
 
-This script intentionally avoids loading any Arena task. It only launches the
-IsaacLab AppLauncher so we can distinguish "Isaac cannot start at all" from
-"Arena task code/imports are failing later".
+这个脚本刻意不加载任何 Arena 任务。它只启动 IsaacLab 的 AppLauncher，
+这样我们就能区分“Isaac 根本无法启动”和“Arena 任务代码/导入在后面失败”。
+
+用法：
+- 当你怀疑 Isaac 启动本身有问题时，先运行这个脚本。
+- 典型示例：``python smolvla_isaac_embed/scripts/isaac_app_probe.py --headless --enable_cameras``。
 """
 
 from __future__ import annotations

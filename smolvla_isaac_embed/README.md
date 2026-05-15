@@ -35,7 +35,7 @@
 
 - `inspect_obs.py`：打印并检查环境观测结构。
 - `dry_run_policy.py`：单步验证模型前向与动作输出。
-- `run_eval.py`：真正的闭环运行脚本。
+- `run_eval.py`：最短闭环运行脚本，当前可先跑 `1 episode / 1 env / 少量 rollout steps`。
 - `benchmark_latency.py`：记录推理与环境步进延迟。
 
 ### `adapters/`
@@ -43,6 +43,12 @@
 放“观测和动作接口适配层”。
 
 这部分是整个工程最关键、最容易出错的地方，建议与主脚本分离。
+
+当前已实现的最小路径：
+
+- `env_adapter.py`：只支持 `policy.robot_joint_pos -> observation.state`
+- `env_adapter.py`：只支持 `camera_obs.robot_pov_cam_rgb -> observation.images.robot_pov_cam`
+- `action_adapter.py`：只支持 `shape=(*, 36)` 的 GR1 Pink 动作直通校验
 
 建议后续放入：
 

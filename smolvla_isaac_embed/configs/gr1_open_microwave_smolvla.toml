@@ -1,0 +1,23 @@
+# Canonical baseline for the current SmolVLA + IsaacLab-Arena integration path.
+# Keep long-lived values here so we do not have to reconstruct them from docs or shell history.
+
+[policy]
+checkpoint = "nvidia/smolvla-arena-gr1-microwave"
+task = "open microwave"
+
+[env]
+# Arena example-environment subcommand used by IsaacLab-Arena.
+example_environment = "gr1_open_microwave"
+# Reference name used by LeRobot docs/examples for the same task family.
+lerobot_environment = "gr1_microwave"
+embodiment = "gr1_pink"
+object = "mustard_bottle"
+headless = true
+enable_cameras = true
+
+[observations]
+state_keys = ["robot_joint_pos"]
+camera_keys = ["robot_pov_cam_rgb"]
+
+[observations.rename_map]
+"observation.images.robot_pov_cam_rgb" = "observation.images.robot_pov_cam"

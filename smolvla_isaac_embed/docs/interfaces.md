@@ -19,6 +19,13 @@ Isaac 环境观测
 
 本节结果来自一次历史最小检查记录；截至 `2026-05-13`，这些值已被整理进本文，但尚未在当前 Codex 代理终端里再次稳定复现。
 
+补充说明：
+
+- `2026-05-15` 在当前 Codex 终端中重新执行同一条 `arena_smoke_check.py --num_steps 0` 命令时，Isaac Sim 在 GPU / Vulkan 初始化阶段失败
+- 当前终端可读到 `/proc/driver/nvidia/gpus/0000:0b:00.0/information`，但没有可用的 `/dev/nvidia*` 设备节点
+- 这意味着“历史观测记录仍有效”，但“当前代理终端能否直接启动 Isaac App”不能再假定成立
+- 同一天，用户本机终端已成功跑通同一条 smoke check，说明这里的问题是“Codex 运行上下文的 GPU 透传/会话差异”，不是环境记录本身失效
+
 ```bash
 OMNI_KIT_ACCEPT_EULA=YES \
 XDG_CACHE_HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.cache \
@@ -64,6 +71,26 @@ HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace \
 
 - `robot_pov_cam_rgb`：`shape=(1, 512, 512, 3)`，`dtype=torch.uint8`
 - 其他：无
+
+### 2.4 当前终端复核状态
+
+`2026-05-15` 在当前 Codex 终端中复核该 smoke check 时，未能完成 Isaac App 启动，关键报错包括：
+
+- `NVML_ERROR_DRIVER_NOT_LOADED`
+- `No device could be created`
+- `Failed to create any GPU devices`
+
+排查结果：
+
+- `nvidia-smi` 在当前终端中不可用
+- `/dev/nvidia*` 在当前终端中不存在
+- `/proc/driver/nvidia/gpus/0000:0b:00.0/information` 仍可读到 `NVIDIA GeForce RTX 3060`
+
+结论：
+
+- 这份接口记录仍可作为“历史已观测 schema”的来源
+- 但在当前终端里，Isaac Sim 启动前提没有满足，因此不应把这里写成“已在本终端最新复现成功”
+- 但用户本机终端已经成功复现，因此当前 schema 记录可以视为“已验证有效”，只是“Codex 当前会话”暂时不能复现
 
 ## 3. LeRobot / SmolVLA 期望输入
 
@@ -136,6 +163,7 @@ robot_joint_pos
 - 该推荐值与 `lerobot/docs/source/envhub_isaaclab_arena.mdx` 中的官方示例保持一致
 - 这是当前最保守、最接近 checkpoint 预期的状态输入方案
 - 是否需要扩展到更多状态字段，仍应以实际 checkpoint 特征与单帧推理结果为准
+- 当前已固化到配置文件：`smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml`
 
 ## 5. `camera_keys`
 
@@ -144,6 +172,10 @@ robot_joint_pos
 ```text
 robot_pov_cam_rgb
 ```
+
+说明：
+
+- 当前已固化到配置文件：`smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml`
 
 ## 6. `rename_map`
 
@@ -161,6 +193,18 @@ robot_pov_cam_rgb
 - 右侧是策略期望名字
 - 该映射与 `lerobot/docs/source/envhub_isaaclab_arena.mdx` 中的 `SmolVLA` 评测命令保持一致
 - 这表示“推荐适配方案”，不等于当前本工程已经有适配层实现
+- 当前已固化到配置文件：`smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml`
+
+## 6.1 当前基线配置文件
+
+当前推荐把以下值统一从配置文件读取，而不是继续依赖命令行记忆：
+
+- Arena 环境名：`gr1_open_microwave`
+- LeRobot 文档环境名：`gr1_microwave`
+- checkpoint：`nvidia/smolvla-arena-gr1-microwave`
+- `state_keys`：`robot_joint_pos`
+- `camera_keys`：`robot_pov_cam_rgb`
+- `rename_map`：`observation.images.robot_pov_cam_rgb -> observation.images.robot_pov_cam`
 
 ## 7. 动作接口
 

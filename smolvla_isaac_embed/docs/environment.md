@@ -2,7 +2,7 @@
 
 本文件只记录当前工作区已经确认过的事实，以及下一步应当基于这些事实采取的策略。
 
-最后核对日期：`2026-05-13`
+最后核对日期：`2026-05-15`
 
 ## 1. 主机与环境
 
@@ -117,6 +117,18 @@ OMNI_KIT_ACCEPT_EULA=YES \
 - 当前工作区里“包可导入”与“Isaac App 可稳定启动”仍然不是同一件事
 - 后续记录应区分“导入成功”与“启动成功”，避免把前者误写成后者
 
+补充记录：
+
+- `2026-05-15` 再次运行 `arena_smoke_check.py --headless --enable_cameras --num_steps 0 gr1_open_microwave --embodiment gr1_pink --object mustard_bottle`
+- 当前 Codex 终端报错仍停留在 GPU 初始化阶段
+- 终端中能读到 `/proc/driver/nvidia/gpus/0000:0b:00.0/information`，显示 `NVIDIA GeForce RTX 3060`
+- 但 `/dev/nvidia*` 设备节点不存在，`nvidia-smi` 也无法与驱动通信
+- 因此更合理的结论是：这里是“代理终端的 GPU 设备透传问题”，而不是直接推翻用户本机终端上的 GPU 可用性
+- 用户本机终端随后已成功跑通同一条命令，输出 `reset_ok`、`device=cuda:0`、`action_space_shape=(1, 36)`、`observation_top_level_keys=['camera_obs', 'policy']`、`smoke_test_ok`
+- 这说明 Arena / IsaacLab / Isaac Sim 的主链路在正确的 GPU 会话里是可用的
+- 当前记录应更新为：问题不在环境本身，而在 Codex 当前会话对 GPU 设备的访问方式
+- 当前基线配置已固化到 `smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml`
+
 ## 4. 当前不应继续做的事
 
 - 不要重复安装已经能导入的 Isaac 组件
@@ -166,6 +178,6 @@ OMNI_KIT_ACCEPT_EULA=YES \
 
 - 在用户本机可用的 GPU / 显示终端里重新执行 Arena smoke test
 - 复核 `gr1_open_microwave` 的 observation / action schema 是否与现有记录一致
-- 固化 `camera_keys` / `state_keys` / `rename_map` 的“推荐配置”与“已实测配置”两套口径
+- 基线配置已固化；后续只需继续区分 `gr1_open_microwave` 与 `gr1_microwave` 两套命名语境
 - 与 SmolVLA 所需输入输出的最小适配脚本
 - 视需要为 `./.venv-lerobot` 继续补装最小运行依赖，并验证 `SmolVLA` checkpoint 加载
