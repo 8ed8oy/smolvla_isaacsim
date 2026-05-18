@@ -162,7 +162,7 @@
 
 1. 为什么这个流程必须开 trust_remote_code。
 2. 环境原始的 policy 和 camera_obs 是在哪一步变成 observation.state 和 observation.images.* 的。
-3. 如果你现在要自己写一个 inspect_obs.py 或 dry_run_policy.py，最小闭环应该抄哪几步。
+3. 如果你现在要自己写一个 inspect_obs.py 或 run_eval_single_frame.py，最小闭环应该抄哪几步。
 
 ## 这份计划默认假设
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""运行一次单帧的 IsaacLab-Arena -> policy dry run。
+"""执行一次单帧的 IsaacLab-Arena -> policy 验证。
 
 这个脚本只做一次环境 reset，把第一帧观测转换为 LeRobot 策略输入，
 执行一次策略推理，并打印得到的 action 形状以及前几个数值。
@@ -12,7 +12,7 @@
 
 用法：
 - 当你想在完整 rollout 之前确认单帧策略推理是否正常时，运行这个脚本。
-- 典型示例：``python smolvla_isaac_embed/scripts/dry_run_policy.py --config smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml``。
+- 典型示例：``python smolvla_isaac_embed/scripts/run_eval_single_frame.py --config smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml``。
 """
 
 from __future__ import annotations
@@ -166,7 +166,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         argv = sys.argv[1:]
     config_path, config = _parse_known_config(argv)
     parser = get_isaaclab_arena_example_environment_cli_parser()
-    parser.description = "Run a single-frame policy dry run on an IsaacLab-Arena environment."
+    parser.description = "Run a single-frame policy validation on an IsaacLab-Arena environment."
     parser.add_argument(
         "--config",
         default=str(config_path),

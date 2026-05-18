@@ -213,6 +213,9 @@ robot_pov_cam_rgb
 - 动作张量形状：环境 `action_space.shape == (1, 36)`（本次检查使用 `num_envs=1`）
 - `action_dim`：`36`
 - 是否 chunked action：否，当前是单步连续动作张量
+- 当前动作适配器语义：identity / shape validation
+- 当前动作适配器职责：只做 rank 归一、`36` 维校验、`torch.float32` 规范化和调试预览，不做重排、不做裁剪、不做 safety clipping
+- 当前 `ACTION_ORDER`：与下表顺序一致
 
 补充说明：
 
@@ -273,6 +276,12 @@ robot_pov_cam_rgb
 - 裁剪：待确认
 - 限幅：待确认
 - 类型转换：需要保证为 `torch.float32`
+
+补充说明：
+
+- 当前代码中的 `MinimalIsaacActionAdapter` 仍是最小 identity adapter
+- 它只负责把 1D 动作升成 `(1, 36)`，或保留 `(B, 36)`，并保证输出 contiguous
+- 未来如果引入重排或 clipping，应显式放到新层，而不是悄悄塞进这个最小 adapter
 
 ## 8. 当前最大风险点
 

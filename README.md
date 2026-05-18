@@ -175,7 +175,7 @@ smolvla_workspace/
 
 1. 为什么现成命令必须带 `trust_remote_code=True` 和 `rename_map`。
 2. Arena 的 `policy` / `camera_obs` 是在哪一层被改成 `observation.state` / `observation.images.*`。
-3. 如果你下一步自己写 `inspect_obs.py` 和 `dry_run_policy.py`，应该复刻 `lerobot-eval` 里的哪一段最小闭环。
+3. 如果你下一步自己写 `inspect_obs.py` 和 `run_eval_single_frame.py`，应该复刻 `lerobot-eval` 里的哪一段最小闭环。
 
 ## Assumptions
 

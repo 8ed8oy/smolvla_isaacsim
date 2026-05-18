@@ -5,6 +5,7 @@
 - 捕捉 state 形状处理或相机张量转换中的回归。
 
 用法：
+- 建议在 `./.conda/lerobot-arena` 环境中运行，这个环境同时具备 `torch` 和 `pytest`。
 - 在本地检查时用 pytest 运行。
 - 典型示例：``python -m pytest smolvla_isaac_embed/tests/test_env_adapter.py -q``。
 """

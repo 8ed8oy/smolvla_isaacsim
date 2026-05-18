@@ -74,7 +74,7 @@ smolvla_isaac_embed/
 适合放：
 
 - observation 检查脚本
-- 模型 dry run 脚本
+- 单帧验证脚本
 - 闭环运行脚本
 - 延迟或显存 benchmark 脚本
 

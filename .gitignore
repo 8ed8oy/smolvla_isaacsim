@@ -55,3 +55,16 @@ tensorboard/
 # 7. Local Environments
 .conda/
 .serena/
+.venv-lerobot/
+
+# 8. Local machine/runtime state from the current workspace
+.nv/
+.nvidia-omniverse/
+.config/pulse/
+.config/matplotlib/
+
+# 9. Agent/IDE tooling state
+.codex/
+
+# 10. 其他
+obsidian_notes/

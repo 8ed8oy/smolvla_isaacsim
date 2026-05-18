@@ -2,7 +2,7 @@
 
 本文件只记录当前工作区已经确认过的事实，以及下一步应当基于这些事实采取的策略。
 
-最后核对日期：`2026-05-15`
+最后核对日期：`2026-05-18`
 
 ## 1. 主机与环境
 
@@ -53,8 +53,10 @@ OMNI_KIT_ACCEPT_EULA=YES \
 
 - 这个环境已经满足“独立承接 Python 3.12 主线 lerobot 源码”的目标
 - 它不会替代 Arena 的 `Python 3.11` 主环境
-- 它当前主要用于源码导入、配置检查、processor / policy 逻辑核查
-- 它还没有补齐 `lerobot` 运行时依赖，不应直接拿来假定能跑完整 `SmolVLA` 推理
+- 它当前作为 `policy_worker.py` 的默认运行环境
+- `2026-05-18` 已补齐 `lerobot[smolvla]` 运行时依赖
+- 已确认 `./.venv-lerobot/bin/python` 中 `torch`、`huggingface_hub`、`lerobot` 均可导入
+- 运行 bridge 时应通过 `--policy_python ./.venv-lerobot/bin/python` 显式指定该环境
 
 ## 3. 当前真正的阻塞点
 
@@ -134,6 +136,8 @@ OMNI_KIT_ACCEPT_EULA=YES \
 - 不要重复安装已经能导入的 Isaac 组件
 - 不要在 `Python 3.11` 的 Arena 环境里强装当前工作区这份 `lerobot`
 - 不要把 `./smolvla_isaac_embed/scripts/setup_isaaclab_arena_env.sh` 当作“一键装全”的可靠入口，除非先修正其中的 `lerobot` 安装步骤
+- 不要把 `source .../activate` 接在 `run_eval_bridge.py` 命令末尾；环境激活必须作为单独 shell 命令执行
+- 不要对 venv Python 入口做 `Path.resolve()` 后再作为子进程解释器使用；这会绕过 venv，落到底层 CPython 可执行文件
 
 ## 5. 当前最合理的技术路线
 
@@ -141,10 +145,11 @@ OMNI_KIT_ACCEPT_EULA=YES \
 
 1. 先把 `IsaacLab-Arena` 独立跑通
 2. 先确认 `gr1_open_microwave` 这类目标环境的观测键、动作维度、摄像头键
-3. 在 `smolvla_isaac_embed/` 内实现最小适配脚本，先不依赖安装整个 `lerobot`
-4. 等最小环境链路稳定后，再决定是：
-   - 单独建立 `Python 3.12` 的 LeRobot 环境用于训练或评测 CLI
-   - 还是只抽取评测所需的最小逻辑接入当前 Arena 环境
+3. 使用 `run_eval_bridge.py` 作为当前默认 rollout 入口
+4. 保持双环境分工：
+   - `./.conda/lerobot-arena/bin/python` 负责 Isaac Sim / Arena
+   - `./.venv-lerobot/bin/python` 负责 `lerobot` / SmolVLA policy
+5. checkpoint 优先使用本地 snapshot，避免 worker 启动时依赖 Hugging Face 在线下载
 
 ## 6. 当前推荐方案判断
 
@@ -164,20 +169,44 @@ OMNI_KIT_ACCEPT_EULA=YES \
 - 现在 Isaac 侧已经基本装好，再平移到 3.12 成本高，而且未必兼容
 - 这会把“环境是否能跑”与“LeRobot 是否能装”两个问题耦合在一起
 
-### 当前最推荐：先绕开 `lerobot` 安装，做最小集成
+### 当前最推荐：双环境 bridge
 
 原因：
 
-- 这是当前风险最小、复用现有成果最多的路径
-- 可以先完成环境实例化、观测检查、动作维度确认
-- 完成这些后，再决定是否单独为 `lerobot` 建立 3.12 辅助环境
+- Isaac Sim / Arena 继续留在已验证的 Python 3.11 环境
+- 当前工作区 `lerobot` 继续留在兼容的 Python 3.12 环境
+- `run_eval_bridge.py` 通过本地 `policy_worker.py` 子进程连接二者
+- 不需要改动上游 `lerobot/`，也不需要把 Isaac 迁移到 Python 3.12
+
+## 6.1 2026-05-18 bridge 排查结论
+
+已确认的推进顺序：
+
+- `run_eval.py` 单进程路径不适用于当前环境，因为 Arena Python 3.11 与 `lerobot >=3.12` 冲突
+- `run_eval_bridge.py` 已能完成参数解析、Arena 环境创建、首次 `env.reset()`、视频帧探测
+- Arena 侧在用户 GPU 终端中可创建 `gr1_open_microwave`，动作空间为 `(1, 36)`，观测顶层 keys 为 `camera_obs` 与 `policy`
+- `policy_worker.py` 会在 Python 3.12 环境中加载 checkpoint 并执行 policy 推理
+
+本轮遇到并修正的关键问题：
+
+- Arena parser 构造会打印 `AppLauncher` warning；该 warning 不是主故障
+- 早期 `_inject_example_environment()` 读取 Arena parser 内部 subparser 结构时会卡住；已改为简单追加 config 中的 example environment
+- `Path.resolve()` 会把 `./.venv-lerobot/bin/python` 解析到底层 uv CPython，导致 worker 绕过 venv；已改为保留 venv 入口路径
+- `./.venv-lerobot` 已安装 `lerobot[smolvla]`
+- Hugging Face 在线下载 checkpoint 时曾出现 DNS / `httpx` 重试错误；当前推荐先把模型 snapshot 下载到本地目录
+- shell 命令中若把 `source .../activate` 接在 bridge 命令末尾，会被 argparse 当作 Arena `example_environment`，因此会报 `invalid choice: 'source'`
+
+当前推荐 checkpoint 路径：
+
+```text
+smolvla_isaac_embed/models/smolvla-arena-gr1-microwave
+```
 
 ## 7. 下一步执行目标
 
 下一步应优先完成：
 
-- 在用户本机可用的 GPU / 显示终端里重新执行 Arena smoke test
-- 复核 `gr1_open_microwave` 的 observation / action schema 是否与现有记录一致
-- 基线配置已固化；后续只需继续区分 `gr1_open_microwave` 与 `gr1_microwave` 两套命名语境
-- 与 SmolVLA 所需输入输出的最小适配脚本
-- 视需要为 `./.venv-lerobot` 继续补装最小运行依赖，并验证 `SmolVLA` checkpoint 加载
+- 使用本地 checkpoint 路径运行 `run_eval_bridge.py`
+- 如果 worker 后续继续报错，优先区分 checkpoint 加载、processor 构造、首次 `select_action()` 三个阶段
+- 保留 `stage=` 日志直到首个完整 rollout 稳定通过
+- 将首个成功 rollout 的命令和结果补充到 `docs/commands.md`

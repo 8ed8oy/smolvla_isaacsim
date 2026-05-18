@@ -3,6 +3,8 @@
 from .action_adapter import (
     ACTION_ORDER,
     EXPECTED_ACTION_DIM,
+    describe_action_order,
+    validate_action_order,
     MinimalIsaacActionAdapter,
     adapt_minimal_action,
 )
@@ -18,6 +20,7 @@ from .env_adapter import (
 __all__ = [
     "ACTION_ORDER",
     "EXPECTED_ACTION_DIM",
+    "describe_action_order",
     "MinimalIsaacActionAdapter",
     "MinimalIsaacEnvAdapter",
     "SOURCE_CAMERA_KEY",
@@ -26,4 +29,5 @@ __all__ = [
     "TARGET_STATE_KEY",
     "adapt_minimal_action",
     "adapt_minimal_observation",
+    "validate_action_order",
 ]

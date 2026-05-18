@@ -207,7 +207,112 @@ HOME=/media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace \
 - 备注：观测顶层 keys 为 `['camera_obs', 'policy']`
 - 备注：最终输出 `smoke_test_ok`
 
-## 5. 调试命令
+## 5. 测试验证
+
+### 5.1 观测与动作适配器测试
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  -m pytest -q \
+  smolvla_isaac_embed/tests/test_env_adapter.py \
+  smolvla_isaac_embed/tests/test_action_adapter.py
+```
+
+结果：
+
+- 是否成功：历史验证
+- 备注：当前工作区的 `.venv` 与 `.venv-lerobot` 里都还没有 `pytest`
+- 备注：Arena 环境 `./.conda/lerobot-arena` 同时具备 `torch` 与 `pytest`，因此适合作为这组单元测试的执行环境
+- 备注：旧版最小测试集合曾得到 `3 passed in 4.23s`
+- 备注：当前 `test_action_adapter.py` 已扩展，建议重新执行以刷新结果
+
+### 5.2 测试目录整体回归
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  -m pytest -q \
+  smolvla_isaac_embed/tests
+```
+
+结果：
+
+- 是否成功：历史验证
+- 备注：旧版 `smolvla_isaac_embed/tests` 曾通过
+- 备注：当前测试数量已变化，建议重新执行以刷新结果
+
+## 6. 单帧入口脚本整理
+
+### 6.1 `run_eval_single_frame.py`
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  smolvla_isaac_embed/scripts/run_eval_single_frame.py \
+  --config smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml
+```
+
+结果：
+
+- 是否成功：待按需复核
+- 备注：这是单帧验证入口，只做一次 reset、一次观测整理、一次 policy 前向和 action 打印
+- 备注：它不替代 `run_eval.py` 的 rollout 主循环
+
+### 6.2 `run_eval.py`
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  smolvla_isaac_embed/scripts/run_eval.py \
+  --config smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml \
+  --max_steps 5 \
+  --num_episodes 1
+```
+
+结果：
+
+- 是否成功：待按需复核
+- 备注：这是完整 rollout 主入口，负责 episode / step 循环、`reset`、`done`、`truncated` 和 `max_steps`
+
+### 6.3 `run_eval.py` 打开视频录制
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  smolvla_isaac_embed/scripts/run_eval.py \
+  --config smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml \
+  --max_steps 100 \
+  --num_episodes 1 \
+  --video \
+  --video_length 100 \
+  --video_interval 200 \
+  --video_dir smolvla_isaac_embed/outputs/videos/run_eval
+```
+
+结果：
+
+- 是否成功：待按需复核
+- 备注：这是 rollout 的视频录制命令，适用于需要保存可视化轨迹时
+
+## 7. 适配器测试命令
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  -m pytest -q \
+  smolvla_isaac_embed/tests/test_env_adapter.py \
+  smolvla_isaac_embed/tests/test_action_adapter.py
+```
+
+结果：
+
+- 是否成功：历史验证
+- 备注：旧版最小测试集合曾得到 `3 passed in 4.23s`
+- 备注：当前 `test_action_adapter.py` 已扩展，建议按本节命令重新执行完整回归
+- 备注：这是纯 adapter / 参数层测试，不需要启动 Isaac App
+
+## 8. 调试命令
 
 用于排查 observation、动作维度、显存等。
 
@@ -218,7 +323,7 @@ find /tmp -maxdepth 2 -type d -name 'pip-*' | sed -n '1,20p'
 conda activate /media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.conda/lerobot-arena
 ```
 
-## 6. 当前推荐命令
+## 9. 当前推荐命令
 
 这一节只保留“当前最推荐使用且已验证过的那几条命令”。
 
@@ -232,12 +337,13 @@ smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml
 
 - Arena 环境名 `gr1_open_microwave`
 - LeRobot 参考环境名 `gr1_microwave`
-- checkpoint `nvidia/smolvla-arena-gr1-microwave`
+- 在线 checkpoint id `nvidia/smolvla-arena-gr1-microwave`
+- 当前推荐本地 checkpoint 路径 `smolvla_isaac_embed/models/smolvla-arena-gr1-microwave`
 - `state_keys`
 - `camera_keys`
 - `rename_map`
 
-### 6.1 推荐的环境检查命令
+### 9.1 推荐的环境检查命令
 
 ```bash
 conda activate /media/bed8oy/3T/01_workspace/vla_models/smolvla_workspace/.conda/lerobot-arena
@@ -247,9 +353,10 @@ nvidia-smi
 
 ./.venv-lerobot/bin/python --version
 ./.venv-lerobot/bin/pip show lerobot
+./.venv-lerobot/bin/python -c "import torch, huggingface_hub, lerobot; print(torch.__version__)"
 ```
 
-### 6.2 推荐的最小运行命令
+### 9.2 推荐的最小运行命令
 
 ```bash
 ./smolvla_isaac_embed/scripts/setup_isaaclab_arena_env.sh
@@ -264,3 +371,135 @@ OMNI_KIT_ACCEPT_EULA=YES \
   --embodiment gr1_pink \
   --object mustard_bottle
 ```
+
+### 9.2.1 动作顺序检查
+
+在开始长 rollout 之前，先固定检查当前 36 维动作语义顺序：
+
+```bash
+./.conda/lerobot-arena/bin/python \
+  smolvla_isaac_embed/scripts/inspect_action_order.py
+```
+
+预期输出包括两部分：
+
+- 一行 `action_order_validation=...`
+- 后续 `index=.. group=.. name=..` 的逐维展开
+
+当前检查口径：
+
+- 前 `7` 维应为左手末端目标位姿
+- 接着 `7` 维应为右手末端目标位姿
+- 最后 `22` 维应为双手手指关节目标
+
+### 9.3 推荐的 bridge rollout 命令
+
+当前推荐使用 `run_eval_bridge.py`，让 Isaac / Arena 留在 Python 3.11，让 SmolVLA / LeRobot 留在 Python 3.12。
+
+```bash
+OMNI_KIT_ACCEPT_EULA=YES \
+  ./.conda/lerobot-arena/bin/python \
+  smolvla_isaac_embed/scripts/run_eval_bridge.py \
+  --config smolvla_isaac_embed/configs/gr1_open_microwave_smolvla.toml \
+  --policy_python ./.venv-lerobot/bin/python \
+  --checkpoint smolvla_isaac_embed/models/smolvla-arena-gr1-microwave \
+  --max_steps 100 \
+  --num_episodes 1 \
+  --video \
+  --video_length 100 \
+  --video_interval 200 \
+  --video_dir smolvla_isaac_embed/outputs/videos/run_eval
+```
+
+注意：
+
+- 上面命令假设模型 snapshot 已经手动下载到 `smolvla_isaac_embed/models/smolvla-arena-gr1-microwave`
+- 每行续行反斜杠 `\` 后面不能有空格
+- 如果 shell 已经激活了其他环境也没关系，这条命令显式指定了 Arena Python 和 policy Python
+
+### 9.4 本地 checkpoint 下载命令
+
+模型主页：
+
+- https://huggingface.co/nvidia/smolvla-arena-gr1-microwave
+
+当前工程推荐把完整 checkpoint 放到：
+
+```text
+smolvla_isaac_embed/models/smolvla-arena-gr1-microwave
+```
+
+优先推荐使用 Hugging Face 的页面下载或 `snapshot_download` 拉取完整 snapshot，不要把“直接 `git clone` 模型仓库”当作默认下载方式。
+
+原因：
+
+- Hugging Face 模型仓库通常通过 Git LFS 管理权重文件
+- 直接 `git clone` 时如果本机没有正确执行 LFS 拉取，仓库里会留下 pointer 文本文件，而不是真正的 `.safetensors`
+- 这类不完整文件最常见的特征是体积非常小，例如一百多字节
+- 当前桥接加载中如果读到这类假文件，可能报 `SafetensorError: Error while deserializing header: header too large`
+
+如果网络可访问 Hugging Face，可先手动拉取模型：
+
+```bash
+mkdir -p smolvla_isaac_embed/models
+
+./.venv-lerobot/bin/python - <<'PY'
+from huggingface_hub import snapshot_download
+
+path = snapshot_download(
+    repo_id="nvidia/smolvla-arena-gr1-microwave",
+    local_dir="smolvla_isaac_embed/models/smolvla-arena-gr1-microwave",
+)
+print(path)
+PY
+```
+
+如果该命令报 `Temporary failure in name resolution`，说明当前终端访问 Hugging Face 的 DNS / 网络不稳定，应换到可联网会话或使用已有本地 snapshot。
+
+如果你是从网页手动下载，请确保把完整文件下载到本地目录，而不是只把仓库结构 clone 下来。至少应包含：
+
+```text
+README.md
+config.json
+model.safetensors
+policy_preprocessor.json
+policy_preprocessor_step_5_normalizer_processor.safetensors
+policy_postprocessor.json
+policy_postprocessor_step_0_unnormalizer_processor.safetensors
+train_config.json
+```
+
+如果你已经 `git clone` 过模型目录，请额外检查小的 `.safetensors` 文件是不是 LFS pointer：
+
+```bash
+ls -lh smolvla_isaac_embed/models/smolvla-arena-gr1-microwave
+sed -n '1,5p' smolvla_isaac_embed/models/smolvla-arena-gr1-microwave/policy_preprocessor_step_5_normalizer_processor.safetensors
+```
+
+如果文件内容长这样：
+
+```text
+version https://git-lfs.github.com/spec/v1
+oid sha256:...
+size ...
+```
+
+说明它不是真权重文件，必须重新下载对应 raw 文件或重新执行完整 snapshot 下载。
+
+### 9.5 checkpoint 完整性快速检查
+
+在启动 `run_eval_bridge.py` 之前，建议先检查本地 checkpoint 是否完整：
+
+```bash
+ls -lh smolvla_isaac_embed/models/smolvla-arena-gr1-microwave
+
+file smolvla_isaac_embed/models/smolvla-arena-gr1-microwave/model.safetensors
+file smolvla_isaac_embed/models/smolvla-arena-gr1-microwave/policy_preprocessor_step_5_normalizer_processor.safetensors
+file smolvla_isaac_embed/models/smolvla-arena-gr1-microwave/policy_postprocessor_step_0_unnormalizer_processor.safetensors
+```
+
+经验上：
+
+- `model.safetensors` 应该是大文件，而不是几 KB 或几百字节
+- `policy_preprocessor_step_5_normalizer_processor.safetensors` 和 `policy_postprocessor_step_0_unnormalizer_processor.safetensors` 也不应是 `130B`
+- 如果它们是 `130B` 左右，基本可以判定下载到的是 Git LFS pointer
